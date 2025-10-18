@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "AppName",
+    "ParameterValue": "bedrock-ai-streamlit"
+  },
+  {
+    "ParameterKey": "BedrockAgentId",
+    "ParameterValue": "HMASWS7VNA"
+  },
+  {
+    "ParameterKey": "BedrockAgentAliasId",
+    "ParameterValue": "S7KMPCYKQX"
+  },
+  {
+    "ParameterKey": "AppTitle",
+    "ParameterValue": "Welcome to BEDROCK Agent"
+  },
+  {
+    "ParameterKey": "AppIcon",
+    "ParameterValue": "🤖"
+  },
+  {
+    "ParameterKey": "InstanceCpu",
+    "ParameterValue": "1 vCPU"
+  },
+  {
+    "ParameterKey": "InstanceMemory",
+    "ParameterValue": "2 GB"
+  }
+]
