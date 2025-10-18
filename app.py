@@ -2,17 +2,21 @@ from dotenv import load_dotenv
 import json
 import logging
 import logging.config
+import os
 import re
 from services import bedrock_agent_runtime
 import streamlit as st
 import uuid
 import yaml
 
+# Load environment variables
+load_dotenv()
+
 # Get config from environment variables
-agent_id = 'RRMFRCGXG4'        #4 Add Agent ID  
-agent_alias_id = '2CT1RDHYH0'  #5 Add Agent Alias ID
-ui_title =  "Welcome to Hotel Booking Agent"
-ui_icon = "BEDROCK_AGENT_TEST_UI_ICON"
+agent_id = os.getenv('BEDROCK_AGENT_ID', 'RRMFRCGXG4')
+agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID', '2CT1RDHYH0')
+ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to BEDROCK Agent')
+ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🏨')
 
 
 def init_session_state():
