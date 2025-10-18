@@ -13,8 +13,8 @@ import yaml
 load_dotenv()
 
 # Get config from environment variables
-agent_id = os.getenv('BEDROCK_AGENT_ID', 'RRMFRCGXG4')
-agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID', '2CT1RDHYH0')
+agent_id = os.getenv('BEDROCK_AGENT_ID', 'HMASWS7VNA')
+agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID', 'S7KMPCYKQX')
 ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to BEDROCK Agent')
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🏨')
 
