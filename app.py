@@ -7,12 +7,13 @@ from services import bedrock_agent_runtime
 import streamlit as st
 import uuid
 import yaml
+import os
 
 # Get config from environment variables
-agent_id = 'ABC'        #4 Add Agent ID  
-agent_alias_id = 'ABC'  #5 Add Agent Alias ID
-ui_title =  "Welcome to CenITex Modern Cloud Cost Calculator Powered by AI"
-ui_icon = "BEDROCK_AGENT_TEST_UI_ICON"
+agent_id = os.getenv('BEDROCK_AGENT_ID')
+agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID')
+ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern Cloud Cost Calculator Powered by AI')
+ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
 
 
 def init_session_state():
