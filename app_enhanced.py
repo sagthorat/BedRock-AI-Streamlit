@@ -215,7 +215,7 @@ def display_header():
     st.markdown(f"""
     <div class="main-header">
         <h1>{ui_icon} {ui_title}</h1>
-        <p>Powered by Amazon Bedrock AI • Intelligent Conversations Made Simple</p>
+        <p>Calulate Hosting costs based on Support Type and Cloud Consumption</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -258,14 +258,8 @@ def display_welcome_message():
         st.markdown("""
         <div class="chat-container">
             <div class="assistant-message">
-                <h3>👋 Welcome! I'm your AI Assistant</h3>
-                <p>I'm here to help you with your questions and tasks. Here are some things I can do:</p>
-                <ul>
-                    <li>🔍 Answer questions and provide detailed explanations</li>
-                    <li>💡 Help with problem-solving and analysis</li>
-                    <li>📊 Provide insights and recommendations</li>
-                    <li>🛠️ Assist with technical tasks and guidance</li>
-                </ul>
+                <h3> Welcome! I'm your AI Cost Calculator</h3>
+                <p>I'm here to help you with your costing related questions on CenITex Modern Cloud</p>                
                 <p><strong>How can I assist you today?</strong></p>
             </div>
         </div>
@@ -341,64 +335,64 @@ def display_sidebar():
         
         st.markdown("---")
         
-        # Agent information
-        st.markdown("### 🤖 Agent Info")
-        st.info(f"""
-        **Agent ID:** `{agent_id[:8]}...`  
-        **Session:** `{st.session_state.session_id[:8]}...`  
-        **Region:** `{os.getenv('AWS_DEFAULT_REGION', 'us-east-1')}`
-        """)
+        # # Agent information
+        # st.markdown("### 🤖 Agent Info")
+        # st.info(f"""
+        # **Agent ID:** `{agent_id[:8]}...`  
+        # **Session:** `{st.session_state.session_id[:8]}...`  
+        # **Region:** `{os.getenv('AWS_DEFAULT_REGION', 'us-east-1')}`
+        # """)
         
         # Advanced options
-        with st.expander("⚙️ Advanced Options"):
-            show_trace = st.checkbox("Show Trace Data", value=False)
-            show_citations = st.checkbox("Show Citations", value=True)
-            debug_mode = st.checkbox("Debug Mode", value=False)
+        # with st.expander("⚙️ Advanced Options"):
+        #     show_trace = st.checkbox("Show Trace Data", value=False)
+        #     show_citations = st.checkbox("Show Citations", value=True)
+        #     debug_mode = st.checkbox("Debug Mode", value=False)
         
-        # Display trace information if enabled
-        if show_trace and st.session_state.trace:
-            display_trace_sidebar()
+        # # Display trace information if enabled
+        # if show_trace and st.session_state.trace:
+        #     display_trace_sidebar()
         
-        # Display citations if enabled
-        if show_citations and st.session_state.citations:
-            display_citations_sidebar()
+        # # Display citations if enabled
+        # if show_citations and st.session_state.citations:
+        #     display_citations_sidebar()
 
-def display_trace_sidebar():
-    st.markdown("### 🔍 Trace Information")
+# def display_trace_sidebar():
+#     st.markdown("### 🔍 Trace Information")
     
-    trace_types_map = {
-        "Pre-Processing": ["preGuardrailTrace", "preProcessingTrace"],
-        "Orchestration": ["orchestrationTrace"],
-        "Post-Processing": ["postProcessingTrace", "postGuardrailTrace"]
-    }
+#     trace_types_map = {
+#         "Pre-Processing": ["preGuardrailTrace", "preProcessingTrace"],
+#         "Orchestration": ["orchestrationTrace"],
+#         "Post-Processing": ["postProcessingTrace", "postGuardrailTrace"]
+#     }
     
-    step_num = 1
-    for trace_type_header in trace_types_map:
-        with st.expander(f"📋 {trace_type_header}", expanded=False):
-            has_trace = False
-            for trace_type in trace_types_map[trace_type_header]:
-                if trace_type in st.session_state.trace:
-                    has_trace = True
-                    st.json(st.session_state.trace[trace_type])
-                    step_num += 1
-            if not has_trace:
-                st.text("No trace data available")
+#     step_num = 1
+#     for trace_type_header in trace_types_map:
+#         with st.expander(f"📋 {trace_type_header}", expanded=False):
+#             has_trace = False
+#             for trace_type in trace_types_map[trace_type_header]:
+#                 if trace_type in st.session_state.trace:
+#                     has_trace = True
+#                     st.json(st.session_state.trace[trace_type])
+#                     step_num += 1
+#             if not has_trace:
+#                 st.text("No trace data available")
 
-def display_citations_sidebar():
-    st.markdown("### 📚 Citations")
+# def display_citations_sidebar():
+#     st.markdown("### 📚 Citations")
     
-    if st.session_state.citations:
-        citation_num = 1
-        for citation in st.session_state.citations:
-            for retrieved_ref in citation["retrievedReferences"]:
-                with st.expander(f"📄 Citation [{citation_num}]", expanded=False):
-                    st.json({
-                        "generatedResponsePart": citation["generatedResponsePart"],
-                        "retrievedReference": retrieved_ref
-                    })
-                citation_num += 1
-    else:
-        st.text("No citations available")
+#     if st.session_state.citations:
+#         citation_num = 1
+#         for citation in st.session_state.citations:
+#             for retrieved_ref in citation["retrievedReferences"]:
+#                 with st.expander(f"📄 Citation [{citation_num}]", expanded=False):
+#                     st.json({
+#                         "generatedResponsePart": citation["generatedResponsePart"],
+#                         "retrievedReference": retrieved_ref
+#                     })
+#                 citation_num += 1
+#     else:
+#         st.text("No citations available")
 
 def export_chat():
     if st.session_state.messages:
