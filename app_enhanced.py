@@ -15,8 +15,8 @@ import time
 load_dotenv()
 
 # Get config from environment variables
-agent_id = os.getenv('BEDROCK_AGENT_ID', 'HMASWS7VNA')
-agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID', 'S7KMPCYKQX')
+agent_id = os.getenv('BEDROCK_AGENT_ID')
+agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID')
 ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern Cloud Cost Calculator Powered by AI')
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
 
