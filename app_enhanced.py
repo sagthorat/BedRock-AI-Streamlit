@@ -21,179 +21,50 @@ ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern C
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
 logo_path = os.getenv('BEDROCK_AGENT_TEST_UI_LOGO', 'logo.png')
 
-# Custom CSS for modern styling
+# Simple CSS styling
 def load_css():
     st.markdown("""
     <style>
-    /* Main theme colors */
-    :root {
-        --primary-color: #1f77b4;
-        --secondary-color: #ff7f0e;
-        --success-color: #2ca02c;
-        --warning-color: #d62728;
-        --background-color: #f8f9fa;
-        --card-background: #ffffff;
-        --text-color: #2c3e50;
-        --border-color: #e1e8ed;
-    }
-    
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Custom header */
+    /* Simple header */
     .main-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 2rem 1rem;
-        border-radius: 10px;
-        margin-bottom: 2rem;
+        background: #1f77b4;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
         text-align: center;
         color: white;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
     .main-header h1 {
         margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        font-size: 2rem;
     }
     
     .main-header p {
         margin: 0.5rem 0 0 0;
-        font-size: 1.2rem;
-        opacity: 0.9;
+        font-size: 1rem;
     }
     
-    /* Chat container styling */
-    .chat-container {
-        background: var(--card-background);
-        border-radius: 15px;
-        padding: 1rem;
-        margin: 1rem 0;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--border-color);
-    }
-    
-    /* Message styling */
+    /* Simple message styling */
     .user-message {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
+        background: #e3f2fd;
         padding: 1rem;
-        border-radius: 15px 15px 5px 15px;
+        border-radius: 8px;
         margin: 0.5rem 0;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #1f77b4;
     }
     
     .assistant-message {
-        background: #f8f9fa;
-        color: var(--text-color);
+        background: #f5f5f5;
         padding: 1rem;
-        border-radius: 15px 15px 15px 5px;
+        border-radius: 8px;
         margin: 0.5rem 0;
-        border-left: 4px solid var(--primary-color);
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    }
-    
-    /* Sidebar styling */
-    .css-1d391kg {
-        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 25px;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    }
-    
-    /* Input styling */
-    .stTextInput > div > div > input {
-        border-radius: 25px;
-        border: 2px solid var(--border-color);
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .stTextInput > div > div > input:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(31, 119, 180, 0.1);
-    }
-    
-    /* Metrics styling */
-    .metric-card {
-        background: var(--card-background);
-        padding: 1rem;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--border-color);
-        margin: 0.5rem 0;
-    }
-    
-    /* Status indicators */
-    .status-online {
-        color: var(--success-color);
-        font-weight: bold;
-    }
-    
-    .status-processing {
-        color: var(--warning-color);
-        font-weight: bold;
-    }
-    
-    /* Loading animation */
-    .loading-dots {
-        display: inline-block;
-        position: relative;
-        width: 80px;
-        height: 80px;
-    }
-    
-    .loading-dots div {
-        position: absolute;
-        top: 33px;
-        width: 13px;
-        height: 13px;
-        border-radius: 50%;
-        background: var(--primary-color);
-        animation-timing-function: cubic-bezier(0, 1, 1, 0);
-    }
-    
-    /* Expander styling */
-    .streamlit-expanderHeader {
-        background: var(--background-color);
-        border-radius: 5px;
-        border: 1px solid var(--border-color);
-    }
-    
-    /* Code block styling */
-    .stCode {
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
-    }
-    
-    /* Citation styling */
-    .citation-badge {
-        background: var(--primary-color);
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
-        font-weight: bold;
-        margin: 0.2rem;
-        display: inline-block;
+        border-left: 4px solid #666;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -263,12 +134,10 @@ def display_metrics():
 def display_welcome_message():
     if not st.session_state.messages:
         st.markdown("""
-        <div class="chat-container">
-            <div class="assistant-message">
-                <h3> Welcome! I'm your AI Cost Calculator</h3>
-                <p>I'm here to help you with your costing related questions on CenITex Modern Cloud</p>                
-                <p><strong>How can I assist you today?</strong></p>
-            </div>
+        <div class="assistant-message">
+            <h3>Welcome! I'm your AI Cost Calculator</h3>
+            <p>I'm here to help you with your costing related questions on CenITex Modern Cloud</p>                
+            <p><strong>How can I assist you today?</strong></p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -277,24 +146,20 @@ def display_chat_message(message, is_user=False):
     icon = "👤" if is_user else "🤖"
     
     st.markdown(f"""
-    <div class="chat-container">
-        <div class="{message_class}">
-            <strong>{icon} {'You' if is_user else 'AI Assistant'}</strong>
-            <div style="margin-top: 0.5rem;">
-                {message}
-            </div>
+    <div class="{message_class}">
+        <strong>{icon} {'You' if is_user else 'AI Assistant'}</strong>
+        <div style="margin-top: 0.5rem;">
+            {message}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 def display_typing_indicator():
     st.markdown("""
-    <div class="chat-container">
-        <div class="assistant-message">
-            <strong>🤖 AI Assistant</strong>
-            <div style="margin-top: 0.5rem;">
-                <em>Thinking...</em> ⏳
-            </div>
+    <div class="assistant-message">
+        <strong>🤖 AI Assistant</strong>
+        <div style="margin-top: 0.5rem;">
+            <em>Thinking...</em> ⏳
         </div>
     </div>
     """, unsafe_allow_html=True)
