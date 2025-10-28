@@ -19,6 +19,7 @@ agent_id = os.getenv('BEDROCK_AGENT_ID')
 agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID')
 ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern Cloud Cost Calculator Powered by AI')
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
+logo_path = os.getenv('BEDROCK_AGENT_TEST_UI_LOGO', 'logo.png')
 
 # Custom CSS for modern styling
 def load_css():
@@ -212,10 +213,16 @@ def init_session_state():
         st.session_state.session_start_time = datetime.now()
 
 def display_header():
+    # Display logo if it exists
+    if os.path.exists(logo_path):
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.image(logo_path, width=200)
+    
     st.markdown(f"""
     <div class="main-header">
         <h1>{ui_icon} {ui_title}</h1>
-        <p>Calulate Hosting costs based on Support Type and Cloud Consumption</p>
+        <p>Calculate Hosting costs based on Support Type and Cloud Consumption</p>
     </div>
     """, unsafe_allow_html=True)
 
