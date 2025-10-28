@@ -21,7 +21,7 @@ ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern C
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
 logo_path = os.getenv('BEDROCK_AGENT_TEST_UI_LOGO', 'logo.png')
 
-# Simple CSS styling
+# Custom CSS styling
 def load_css():
     st.markdown("""
     <style>
@@ -30,11 +30,17 @@ def load_css():
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Simple header */
+    /* Center logo */
+    .logo-container {
+        text-align: center;
+        margin: 2rem 0;
+    }
+    
+    /* Header styling */
     .main-header {
-        background: #1f77b4;
+        background: #2E8B57;
         padding: 1.5rem;
-        border-radius: 8px;
+        border-radius: 12px;
         margin-bottom: 1rem;
         text-align: center;
         color: white;
@@ -50,21 +56,33 @@ def load_css():
         font-size: 1rem;
     }
     
-    /* Simple message styling */
+    /* Message styling */
     .user-message {
-        background: #e3f2fd;
+        background: #E8F5E8;
         padding: 1rem;
-        border-radius: 8px;
+        border-radius: 12px;
         margin: 0.5rem 0;
-        border-left: 4px solid #1f77b4;
+        border-left: 4px solid #2E8B57;
     }
     
     .assistant-message {
-        background: #f5f5f5;
+        background: #F0F8FF;
         padding: 1rem;
-        border-radius: 8px;
+        border-radius: 12px;
         margin: 0.5rem 0;
-        border-left: 4px solid #666;
+        border-left: 4px solid #4682B4;
+    }
+    
+    /* Input box styling */
+    .stTextInput > div > div > input {
+        background-color: #000000 !important;
+        color: #FFFFFF !important;
+        border: 2px solid #2E8B57 !important;
+        border-radius: 8px !important;
+    }
+    
+    .stTextInput > div > div > input::placeholder {
+        color: #CCCCCC !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -84,11 +102,13 @@ def init_session_state():
         st.session_state.session_start_time = datetime.now()
 
 def display_header():
-    # Display logo if it exists
+    # Display centered logo if it exists
     if os.path.exists(logo_path):
-        col1, col2, col3 = st.columns([1, 2, 1])
+        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
-            st.image(logo_path, width=200)
+            st.image(logo_path, width=300)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown(f"""
     <div class="main-header">
@@ -98,36 +118,20 @@ def display_header():
     """, unsafe_allow_html=True)
 
 def display_metrics():
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     
     with col1:
-        st.metric(
-            label="💬 Messages",
-            value=st.session_state.message_count,
-            delta=None
-        )
-    
-    with col2:
-        session_duration = datetime.now() - st.session_state.session_start_time
-        minutes = int(session_duration.total_seconds() / 60)
-        st.metric(
-            label="⏱️ Session Time",
-            value=f"{minutes}m",
-            delta=None
-        )
-    
-    with col3:
-        st.metric(
-            label="📚 Citations",
-            value=len(st.session_state.citations),
-            delta=None
-        )
-    
-    with col4:
         status = "🟢 Online" if agent_id else "🔴 Offline"
         st.metric(
             label="🤖 Agent Status",
             value=status,
+            delta=None
+        )
+    
+    with col2:
+        st.metric(
+            label="💬 Messages",
+            value=st.session_state.message_count,
             delta=None
         )
 
@@ -195,15 +199,31 @@ def display_sidebar():
         st.markdown("### 🎛️ Control Panel")
         
         # Session controls
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🔄 New Chat", use_container_width=True):
-                init_session_state()
-                st.rerun()
+        if st.button("🔄 New Chat", use_container_width=True):
+            st.session_state.messages = []
+            st.session_state.message_count = 0
+            st.session_state.citations = []
+            st.session_state.trace = {}
+            st.session_state.session_id = str(uuid.uuid4())
+            st.session_state.session_start_time = datetime.now()
+            st.rerun()
         
-        with col2:
-            if st.button("📥 Export", use_container_width=True):
-                export_chat()
+        # Download chat history
+        if st.session_state.messages:
+            chat_data = {
+                "session_id": st.session_state.session_id,
+                "timestamp": datetime.now().isoformat(),
+                "messages": st.session_state.messages,
+                "message_count": st.session_state.message_count
+            }
+            
+            st.download_button(
+                label="💾 Download Chat",
+                data=json.dumps(chat_data, indent=2),
+                file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                use_container_width=True
+            )
         
         st.markdown("---")
         
@@ -266,21 +286,7 @@ def display_sidebar():
 #     else:
 #         st.text("No citations available")
 
-def export_chat():
-    if st.session_state.messages:
-        chat_data = {
-            "session_id": st.session_state.session_id,
-            "timestamp": datetime.now().isoformat(),
-            "messages": st.session_state.messages,
-            "message_count": st.session_state.message_count
-        }
-        
-        st.download_button(
-            label="💾 Download Chat History",
-            data=json.dumps(chat_data, indent=2),
-            file_name=f"chat_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-            mime="application/json"
-        )
+
 
 def main():
     # Page configuration
