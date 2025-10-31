@@ -1,61 +1,19 @@
 from dotenv import load_dotenv
 import json
 import os
-import boto3
+from services import bedrock_agent_runtime
 import streamlit as st
 import uuid
 from datetime import datetime
-import hashlib
-import hmac
-import base64
-from services import bedrock_agent_runtime
 
 # Load environment variables
 load_dotenv()
-
-# Cognito configuration
-COGNITO_USER_POOL_ID = os.getenv('COGNITO_USER_POOL_ID')
-COGNITO_CLIENT_ID = os.getenv('COGNITO_CLIENT_ID')
-COGNITO_CLIENT_SECRET = os.getenv('COGNITO_CLIENT_SECRET')
-AWS_REGION = os.getenv('AWS_REGION', 'us-east-1')
 
 # App configuration
 agent_id = os.getenv('BEDROCK_AGENT_ID')
 agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID')
 ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern Cloud Cost Calculator Powered by AI')
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
-
-# Initialize Cognito client
-cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
-
-def get_secret_hash(username):
-    """Generate secret hash for Cognito authentication"""
-    message = username + COGNITO_CLIENT_ID
-    dig = hmac.new(
-        str(COGNITO_CLIENT_SECRET).encode('utf-8'),
-        msg=str(message).encode('utf-8'),
-        digestmod=hashlib.sha256
-    ).digest()
-    return base64.b64encode(dig).decode()
-
-def authenticate_user(username, password):
-    """Authenticate user with Cognito"""
-    try:
-        response = cognito_client.initiate_auth(
-            ClientId=COGNITO_CLIENT_ID,
-            AuthFlow='USER_PASSWORD_AUTH',
-            AuthParameters={
-                'USERNAME': username,
-                'PASSWORD': password,
-                'SECRET_HASH': get_secret_hash(username)
-            }
-        )
-        return response['AuthenticationResult']
-    except Exception as e:
-        st.error(f"Authentication failed: {str(e)}")
-        return None
-
-
 
 def load_css():
     st.markdown("""
@@ -92,16 +50,6 @@ def load_css():
         margin: 0.3rem 0 0 0;
         font-size: 0.9rem;
         opacity: 0.9;
-    }
-    
-    /* Login form styling */
-    .login-form {
-        background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        max-width: 400px;
-        margin: 2rem auto;
     }
     
     /* Message styling */
@@ -156,16 +104,34 @@ def load_css():
         color: #ffffff !important;
         font-weight: 800 !important;
     }
+    
+    /* Login form input styling - lighter than main chat input */
+    div[data-testid="stForm"] .stTextInput > div > div > input {
+        background: #f8f9fa !important;
+        color: #2c3e50 !important;
+        border: 2px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        min-height: auto !important;
+    }
+    
+    div[data-testid="stForm"] .stTextInput > div > div > input:focus {
+        border-color: #452c63 !important;
+        box-shadow: 0 0 0 3px rgba(69, 44, 99, 0.1) !important;
+        transform: none !important;
+    }
+    
+    div[data-testid="stForm"] .stTextInput > div > div > input::placeholder {
+        color: #6c757d !important;
+        font-weight: 400 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
 def init_session_state():
-    if 'authenticated' not in st.session_state:
-        st.session_state.authenticated = False
-    if 'username' not in st.session_state:
-        st.session_state.username = None
-    if 'access_token' not in st.session_state:
-        st.session_state.access_token = None
     if 'session_id' not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
     if 'messages' not in st.session_state:
@@ -178,26 +144,10 @@ def init_session_state():
         st.session_state.message_count = 0
     if 'session_start_time' not in st.session_state:
         st.session_state.session_start_time = datetime.now()
-
-def display_login_form():
-    """Display login form"""
-    st.markdown('<div class="login-form">', unsafe_allow_html=True)
-    
-    st.subheader("🔐 Login")
-    username = st.text_input("Username", key="login_username")
-    password = st.text_input("Password", type="password", key="login_password")
-    
-    if st.button("Login", use_container_width=True):
-        if username and password:
-            auth_result = authenticate_user(username, password)
-            if auth_result:
-                st.session_state.authenticated = True
-                st.session_state.username = username
-                st.session_state.access_token = auth_result['AccessToken']
-                st.success("Login successful!")
-                st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
+    if 'username' not in st.session_state:
+        st.session_state.username = ""
 
 def display_chat_message(message, is_user=False):
     message_class = "user-message" if is_user else "assistant-message"
@@ -212,25 +162,46 @@ def display_chat_message(message, is_user=False):
     </div>
     """, unsafe_allow_html=True)
 
+def simple_login():
+    """Simple login form"""
+    st.markdown("""
+    <div class="main-header" style="max-width: 500px; margin: 2rem auto; text-align: center;">
+        <h1>🔐 CenITex AI Cost Calculator</h1>
+        <p>Please login to access the AI-powered cloud cost calculator</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            login_button = st.form_submit_button("Login", use_container_width=True)
+            
+            if login_button:
+                if username and password:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.rerun()
+                else:
+                    st.error("Please enter both username and password")
+
 def display_authenticated_app():
-    """Display the main app for authenticated users"""
+    """Display the main app using app_simple UI"""
     
     # SIDEBAR
     with st.sidebar:
-        # Logo at the top if it exists
         if os.path.exists("logo.png"):
             st.image("logo.png", width=200)
             st.divider()
         
         st.title("🎛️ Control Panel")
         
-        # User info
+        # User info with logout
         st.subheader(f"👤 Welcome, {st.session_state.username}")
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.authenticated = False
-            st.session_state.username = None
-            st.session_state.access_token = None
-            st.session_state.messages = []
+            st.session_state.username = ""
             st.rerun()
         
         st.divider()
@@ -278,7 +249,6 @@ def display_authenticated_app():
             st.info("No chat history available")
     
     # MAIN CONTENT
-    # Header
     st.markdown(f"""
     <div class="main-header">
         <h1>{ui_icon} {ui_title}</h1>
@@ -293,20 +263,16 @@ def display_authenticated_app():
         else:
             display_chat_message(message["content"], is_user=False)
     
-    # Add spacer to prevent input box overlap
     st.markdown("<div style='height: 300px;'></div>", unsafe_allow_html=True)
     
     # Chat input
     if prompt := st.chat_input("Please start by typing preferred cloud platform, support type and estimated consumption costs"):
-        # Add user message
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.session_state.message_count += 1
         
-        # Display user message
         display_chat_message(prompt, is_user=True)
         
         try:
-            # Get AI response
             with st.spinner("🤔 Processing your request..."):
                 response = bedrock_agent_runtime.invoke_agent(
                     agent_id,
@@ -315,10 +281,8 @@ def display_authenticated_app():
                     prompt
                 )
             
-            # Process response
             output_text = response["output_text"]
             
-            # Handle JSON responses
             try:
                 output_json = json.loads(output_text, strict=False)
                 if "instruction" in output_json and "result" in output_json:
@@ -326,12 +290,10 @@ def display_authenticated_app():
             except json.JSONDecodeError:
                 pass
             
-            # Store response data
             st.session_state.messages.append({"role": "assistant", "content": output_text})
             st.session_state.citations = response["citations"]
             st.session_state.trace = response["trace"]
             
-            # Display AI response
             display_chat_message(output_text, is_user=False)
             
         except Exception as e:
@@ -339,34 +301,20 @@ def display_authenticated_app():
             st.info("Please check your connection and try again.")
 
 def main():
-    # Page configuration
     st.set_page_config(
         page_title=ui_title,
         page_icon=ui_icon,
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed" if not st.session_state.get('authenticated', False) else "expanded"
     )
     
-    # Initialize session state
     init_session_state()
-    
-    # Load CSS
     load_css()
     
-    # Check authentication
-    if not st.session_state.authenticated:
-        # Show login form
-        st.markdown(f"""
-        <div class="main-header">
-            <h1>{ui_icon} {ui_title}</h1>
-            <p>Please login to access the Cost Calculator</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        display_login_form()
-    else:
-        # Show authenticated app
+    if st.session_state.authenticated:
         display_authenticated_app()
+    else:
+        simple_login()
 
 if __name__ == "__main__":
     main()
