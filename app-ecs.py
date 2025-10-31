@@ -203,8 +203,10 @@ def init_session_state():
         st.session_state.message_count = 0
     if 'session_start_time' not in st.session_state:
         st.session_state.session_start_time = datetime.now()
-    if 'login_attempted' not in st.session_state:
-        st.session_state.login_attempted = False
+    if 'auth_status' not in st.session_state:
+        st.session_state.auth_status = None
+    if 'logout_clicked' not in st.session_state:
+        st.session_state.logout_clicked = False
 
 def display_chat_message(message, is_user=False):
     message_class = "user-message" if is_user else "assistant-message"
@@ -223,8 +225,10 @@ def display_authenticated_app(authenticator):
     """Display the main app for authenticated users"""
     
     def logout():
+        st.session_state.logout_clicked = True
+        st.session_state.auth_status = None
         authenticator.logout()
-        st.session_state.login_attempted = False
+        st.rerun()
     
     with st.sidebar:
         if os.path.exists("logo.png"):
@@ -367,13 +371,19 @@ def main():
         st.info("📝 Ensure SECRETS_MANAGER_ID environment variable is set and the secret exists in AWS Secrets Manager.")
         st.stop()
     
-    # Authenticate user with auto-refresh
+    # Handle logout
+    if st.session_state.logout_clicked:
+        st.session_state.logout_clicked = False
+        st.rerun()
+    
+    # Authenticate user
     is_logged_in = authenticator.login()
     
-    # Auto-refresh after successful login
-    if is_logged_in and not st.session_state.login_attempted:
-        st.session_state.login_attempted = True
-        st.rerun()
+    # Handle login state changes
+    if is_logged_in != st.session_state.auth_status:
+        st.session_state.auth_status = is_logged_in
+        if is_logged_in:
+            st.rerun()
     
     if not is_logged_in:
         st.markdown("""
