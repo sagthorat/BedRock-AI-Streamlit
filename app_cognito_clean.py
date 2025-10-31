@@ -28,17 +28,14 @@ cognito_client = boto3.client('cognito-idp', region_name=AWS_REGION)
 def load_css():
     st.markdown("""
     <style>
-    /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Global background - purple theme */
     .stApp {
         background: linear-gradient(135deg, #e8e3f0 0%, #d4c5e8 100%);
     }
     
-    /* Header styling */
     .main-header {
         background: #452c63;
         padding: 0.8rem 1.2rem;
@@ -62,7 +59,6 @@ def load_css():
         opacity: 0.9;
     }
     
-    /* Message styling */
     .user-message {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -84,7 +80,6 @@ def load_css():
         max-width: 80%;
     }
     
-    /* Enhanced input box styling */
     .stTextInput > div > div > input {
         background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
         color: #FFFFFF !important;
@@ -115,7 +110,6 @@ def load_css():
         font-weight: 800 !important;
     }
     
-    /* Login form input styling - lighter than main chat input */
     div[data-testid="stForm"] .stTextInput > div > div > input {
         background: #f8f9fa !important;
         color: #2c3e50 !important;
@@ -216,28 +210,37 @@ def cognito_login():
         with st.form("cognito_login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            login_button = st.form_submit_button("Login", use_container_width=True)
+            col_a, col_b = st.columns(2)
             
-            if login_button:
-                if username and password:
-                    with st.spinner("Authenticating..."):
-                        success, result = authenticate_user(username, password)
-                        
-                    if success:
-                        st.session_state.authenticated = True
-                        st.session_state.username = username
-                        st.session_state.access_token = result
-                        st.success("Login successful!")
-                        st.rerun()
-                    else:
-                        st.error(f"Login failed: {result}")
+            with col_a:
+                login_button = st.form_submit_button("Login", use_container_width=True)
+            with col_b:
+                skip_button = st.form_submit_button("Skip Auth", use_container_width=True)
+            
+            if login_button and username and password:
+                with st.spinner("Authenticating..."):
+                    success, result = authenticate_user(username, password)
+                    
+                if success:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.session_state.access_token = result
+                    st.success("Login successful!")
+                    st.rerun()
                 else:
-                    st.error("Please enter both username and password")
+                    st.error(f"Login failed: {result}")
+            elif login_button:
+                st.error("Please enter both username and password")
+            
+            if skip_button:
+                st.session_state.authenticated = True
+                st.session_state.username = "test_user"
+                st.session_state.access_token = "test_token"
+                st.rerun()
 
 def display_authenticated_app():
-    """Display the main app using app_simple UI"""
+    """Display the main app"""
     
-    # SIDEBAR
     with st.sidebar:
         if os.path.exists("logo.png"):
             st.image("logo.png", width=200)
@@ -245,7 +248,6 @@ def display_authenticated_app():
         
         st.title("🎛️ Control Panel")
         
-        # User info with logout
         st.subheader(f"👤 Welcome, {st.session_state.username}")
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.authenticated = False
@@ -255,7 +257,6 @@ def display_authenticated_app():
         
         st.divider()
         
-        # Agent Status
         st.subheader("🤖 Agent Status")
         status = "🟢 Online" if agent_id else "🔴 Offline"
         st.success(f"Status: {status}")
@@ -263,7 +264,6 @@ def display_authenticated_app():
         
         st.divider()
         
-        # Session Controls
         st.subheader("📱 Session Controls")
         if st.button("🔄 New Chat", use_container_width=True):
             st.session_state.messages = []
@@ -276,8 +276,7 @@ def display_authenticated_app():
         
         st.divider()
         
-        # Download Options
-        st.subheader("Save a copy of chat history?")
+        st.subheader("Save chat history?")
         if st.session_state.messages:
             chat_data = {
                 "session_id": st.session_state.session_id,
@@ -305,7 +304,6 @@ def display_authenticated_app():
     </div>
     """, unsafe_allow_html=True)
     
-    # Chat messages
     for message in st.session_state.messages:
         if message["role"] == "user":
             display_chat_message(message["content"], is_user=True)
@@ -314,7 +312,6 @@ def display_authenticated_app():
     
     st.markdown("<div style='height: 300px;'></div>", unsafe_allow_html=True)
     
-    # Chat input
     if prompt := st.chat_input("Please start by typing preferred cloud platform, support type and estimated consumption costs"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.session_state.message_count += 1
