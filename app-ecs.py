@@ -187,6 +187,17 @@ def load_css():
         color: #6c757d !important;
         font-weight: 400 !important;
     }
+    
+    /* Spinner text styling */
+    .stSpinner > div > div {
+        border-color: #452c63 !important;
+    }
+    
+    .stSpinner + div {
+        color: #452c63 !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -309,7 +320,7 @@ def display_authenticated_app(authenticator):
             return
         
         try:
-            with st.spinner("🤔 Processing your request..."):
+            with st.spinner("🤔 **Processing your request...**"):
                 response = bedrock_agent_runtime.invoke_agent(
                     agent_id,
                     agent_alias_id,
