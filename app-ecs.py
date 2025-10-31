@@ -1,25 +1,32 @@
-from dotenv import load_dotenv
-import json
-import os
-from services import bedrock_agent_runtime
 import streamlit as st
-import uuid
-from datetime import datetime
+import json
 import boto3
+from utils.auth import Auth
+from utils.llm import Llm
+from config_file import Config
+
+from dotenv import load_dotenv
+import logging
+import logging.config
+import re
+from services import bedrock_agent_runtime
+import uuid
+import yaml
+import os
+
+from datetime import datetime
 from streamlit_cognito_auth import CognitoAuthenticator
 
-# Load environment variables
-load_dotenv()
-
-# Configuration
-SECRETS_MANAGER_ID = os.getenv('SECRETS_MANAGER_ID', 'CognitoSecrets')
-AWS_REGION = os.getenv('AWS_REGION', 'ap-southeast-2')
-
-# App configuration
-agent_id = os.getenv('BEDROCK_AGENT_ID')
-agent_alias_id = os.getenv('BEDROCK_AGENT_ALIAS_ID')
 ui_title = os.getenv('BEDROCK_AGENT_TEST_UI_TITLE', 'Welcome to CenITex Modern Cloud Cost Calculator Powered by AI')
 ui_icon = os.getenv('BEDROCK_AGENT_TEST_UI_ICON', '🤖')
+agent_id = Config.BEDROCK_AGENT_ID
+agent_alias_id = Config.BEDROCK_AGENT_ALIAS_ID
+
+# ID of Secrets Manager containing cognito parameters
+SECRETS_MANAGER_ID = Config.SECRETS_MANAGER_ID
+
+# ID of the AWS region in which Secrets Manager is deployed
+AWS_REGION = Config.DEPLOYMENT_REGION
 
 class Auth:
     @staticmethod
@@ -100,6 +107,7 @@ def load_css():
         max-width: 80%;
     }
     
+    /* Main chat input - keep bold black styling */
     .stTextInput > div > div > input {
         background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%) !important;
         color: #FFFFFF !important;
@@ -129,6 +137,56 @@ def load_css():
         color: #ffffff !important;
         font-weight: 800 !important;
     }
+    
+    /* Login form styling - lighter colors */
+    .stForm .stTextInput > div > div > input {
+        background: #f8f9fa !important;
+        color: #2c3e50 !important;
+        border: 2px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        min-height: auto !important;
+        transform: none !important;
+    }
+    
+    .stForm .stTextInput > div > div > input:focus {
+        border-color: #452c63 !important;
+        box-shadow: 0 0 0 3px rgba(69, 44, 99, 0.1) !important;
+        transform: none !important;
+    }
+    
+    .stForm .stTextInput > div > div > input::placeholder {
+        color: #6c757d !important;
+        font-weight: 400 !important;
+    }
+    
+    /* Cognito login form specific styling */
+    div[data-testid="stForm"] .stTextInput > div > div > input {
+        background: #f8f9fa !important;
+        color: #2c3e50 !important;
+        border: 2px solid #dee2e6 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        min-height: auto !important;
+        transform: none !important;
+    }
+    
+    div[data-testid="stForm"] .stTextInput > div > div > input:focus {
+        border-color: #452c63 !important;
+        box-shadow: 0 0 0 3px rgba(69, 44, 99, 0.1) !important;
+        transform: none !important;
+    }
+    
+    div[data-testid="stForm"] .stTextInput > div > div > input::placeholder {
+        color: #6c757d !important;
+        font-weight: 400 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -145,6 +203,8 @@ def init_session_state():
         st.session_state.message_count = 0
     if 'session_start_time' not in st.session_state:
         st.session_state.session_start_time = datetime.now()
+    if 'login_attempted' not in st.session_state:
+        st.session_state.login_attempted = False
 
 def display_chat_message(message, is_user=False):
     message_class = "user-message" if is_user else "assistant-message"
@@ -164,6 +224,7 @@ def display_authenticated_app(authenticator):
     
     def logout():
         authenticator.logout()
+        st.session_state.login_attempted = False
     
     with st.sidebar:
         if os.path.exists("logo.png"):
@@ -193,12 +254,6 @@ def display_authenticated_app(authenticator):
             st.session_state.session_id = str(uuid.uuid4())
             st.session_state.session_start_time = datetime.now()
             st.rerun()
-        
-        st.divider()
-        
-        st.subheader("🔍 Debug Info")
-        st.write(f"Agent ID: {agent_id[:10]}..." if agent_id else "Not set")
-        st.write(f"Alias ID: {agent_alias_id}" if agent_alias_id else "Not set")
         
         st.divider()
         
@@ -306,14 +361,20 @@ def main():
     
     # Initialize authenticator
     authenticator = Auth.get_authenticator(SECRETS_MANAGER_ID, AWS_REGION)
-    
+
     if authenticator is None:
         st.error("❌ Failed to initialize authentication. Please check your AWS Secrets Manager configuration.")
         st.info("📝 Ensure SECRETS_MANAGER_ID environment variable is set and the secret exists in AWS Secrets Manager.")
         st.stop()
     
-    # Authenticate user
+    # Authenticate user with auto-refresh
     is_logged_in = authenticator.login()
+    
+    # Auto-refresh after successful login
+    if is_logged_in and not st.session_state.login_attempted:
+        st.session_state.login_attempted = True
+        st.rerun()
+    
     if not is_logged_in:
         st.markdown("""
         <div class="main-header" style="max-width: 500px; margin: 2rem auto; text-align: center;">
