@@ -276,7 +276,6 @@ def display_authenticated_app():
         
         st.divider()
         
-        # Debug info
         st.subheader("🔍 Debug Info")
         st.write(f"Agent ID: {agent_id[:10]}..." if agent_id else "Not set")
         st.write(f"Alias ID: {agent_alias_id}" if agent_alias_id else "Not set")
@@ -376,103 +375,6 @@ def display_authenticated_app():
             fallback_response = "I'm currently unable to process your request due to a technical issue. Please try again later or contact support."
             st.session_state.messages.append({"role": "assistant", "content": fallback_response})
             display_chat_message(fallback_response, is_user=False)
-
-def main():
-    st.set_page_config(
-        page_title=ui_title,
-        page_icon=ui_icon,
-        layout="wide",
-        initial_sidebar_state="collapsed" if not st.session_state.get('authenticated', False) else "expanded"
-    )
-    
-    init_session_state()
-    load_css()
-    
-    if st.session_state.authenticated:
-        display_authenticated_app()
-    else:
-        cognito_login()
-
-if __name__ == "__main__":
-    main()_state.messages = []
-            st.session_state.message_count = 0
-            st.session_state.citations = []
-            st.session_state.trace = {}
-            st.session_state.session_id = str(uuid.uuid4())
-            st.session_state.session_start_time = datetime.now()
-            st.rerun()
-        
-        st.divider()
-        
-        st.subheader("Save chat history?")
-        if st.session_state.messages:
-            chat_data = {
-                "session_id": st.session_state.session_id,
-                "timestamp": datetime.now().isoformat(),
-                "messages": st.session_state.messages,
-                "message_count": st.session_state.message_count,
-                "user": st.session_state.username
-            }
-            
-            st.download_button(
-                label="📄 Download Chat History",
-                data=json.dumps(chat_data, indent=2),
-                file_name=f"chat_history_{st.session_state.username}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json",
-                use_container_width=True
-            )
-        else:
-            st.info("No chat history available")
-    
-    # MAIN CONTENT
-    st.markdown(f"""
-    <div class="main-header">
-        <h1>{ui_icon} {ui_title}</h1>
-        <p>Calculate Hosting costs based on Support Type and Cloud Consumption</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    for message in st.session_state.messages:
-        if message["role"] == "user":
-            display_chat_message(message["content"], is_user=True)
-        else:
-            display_chat_message(message["content"], is_user=False)
-    
-    st.markdown("<div style='height: 300px;'></div>", unsafe_allow_html=True)
-    
-    if prompt := st.chat_input("Please start by typing preferred cloud platform, support type and estimated consumption costs"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        st.session_state.message_count += 1
-        
-        display_chat_message(prompt, is_user=True)
-        
-        try:
-            with st.spinner("🤔 Processing your request..."):
-                response = bedrock_agent_runtime.invoke_agent(
-                    agent_id,
-                    agent_alias_id,
-                    st.session_state.session_id,
-                    prompt
-                )
-            
-            output_text = response["output_text"]
-            
-            try:
-                output_json = json.loads(output_text, strict=False)
-                if "instruction" in output_json and "result" in output_json:
-                    output_text = output_json["result"]
-            except json.JSONDecodeError:
-                pass
-            
-            st.session_state.messages.append({"role": "assistant", "content": output_text})
-            st.session_state.citations = response["citations"]
-            st.session_state.trace = response["trace"]
-            
-            display_chat_message(output_text, is_user=False)
-            
-        except Exception as e:
-            st.error(f"❌ Error: {str(e)}")
-            st.info("Please check your connection and try again.")
 
 def main():
     st.set_page_config(
